@@ -14,6 +14,9 @@ export default function FinanceTools() {
   const [sipPeriod, setSipPeriod] = useState("");
   const [sipReturns, setSipReturns] = useState("");
   const [sipStepUp, setSipStepUp] = useState("");
+  const [currentStockPrice, setCurrentStockPrice] = useState("");
+  const [splitRatio, setSplitRatio] = useState("");
+  const [ownedShares, setOwnedShares] = useState("");
 
   const addStock = () => {
     if (!price || !quantity) return;
@@ -72,6 +75,26 @@ export default function FinanceTools() {
 
   const { expectedAmount, totalInvested, totalGain } = calculateSIP();
 
+  const calculateStockSplit = () => {
+    if (!currentStockPrice || !splitRatio || !ownedShares) return { newStockPrice: "0.00", additionalShares: "0", totalShares: "0", refundAmount: "0.00", wholeShares: "0" };
+    const [newShares, oldShares] = splitRatio.split(":").map(Number);
+    if (!newShares || !oldShares) return { newStockPrice: "0.00", additionalShares: "0", totalShares: "0", refundAmount: "0.00", wholeShares: "0" };
+    const newStockPrice = (parseFloat(currentStockPrice) * oldShares) / newShares;
+    const totalShares = parseInt(ownedShares) * (newShares / oldShares);
+    const additionalShares = totalShares - parseInt(ownedShares);
+    const wholeShares = Math.floor(totalShares);
+    const refundAmount = (totalShares - wholeShares) * newStockPrice; // Calculate refund amount for fractional shares
+    return {
+      newStockPrice: newStockPrice.toFixed(2),
+      additionalShares: additionalShares.toFixed(0),
+      totalShares: totalShares.toFixed(0),
+      refundAmount: refundAmount.toFixed(2),
+      wholeShares: wholeShares.toFixed(0),
+    };
+  };
+
+  const { newStockPrice, additionalShares, totalShares, refundAmount, wholeShares } = calculateStockSplit();
+
   return (
     <div className="p-6 max-w-4xl mx-auto grid grid-cols-2 gap-6 bg-gradient-to-r from-purple-500 to-blue-500 text-white rounded-lg shadow-lg">
       <div className="col-span-1">
@@ -113,6 +136,27 @@ export default function FinanceTools() {
           <p>Total Principal: ₹{loanAmount}</p>
           <p>Total Interest: ₹{totalInterest}</p>
           <p>Total Amount: ₹{totalAmount}</p>
+        </Card>
+
+        {/* Updated Stock Split Calculator Feature */}
+        <Card className="bg-white text-black p-4 mt-6">
+          <h2 className="text-xl font-bold mb-2">Stock Split Calculator</h2>
+          <p className="mb-4">Use this calculator to determine the new stock price and the number of shares you will own after a stock split. A stock split increases the number of shares in a company by issuing more shares to current shareholders. In a 1:2 stock split, for every 2 shares owned, shareholders will receive 1 additional share.</p>
+          
+          <label className="block mb-1">Current Stock Price (₹):</label>
+          <input type="number" value={currentStockPrice} onChange={(e) => setCurrentStockPrice(e.target.value)} className="border p-2 rounded w-full text-black mb-2" />
+          
+          <label className="block mb-1">Stock Split Ratio (New Shares:Old Shares):</label>
+          <input type="text" value={splitRatio} onChange={(e) => setSplitRatio(e.target.value)} className="border p-2 rounded w-full text-black mb-2" placeholder="e.g., 1:2" />
+          
+          <label className="block mb-1">Number of Shares Owned:</label>
+          <input type="number" value={ownedShares} onChange={(e) => setOwnedShares(e.target.value)} className="border p-2 rounded w-full text-black mb-2" />
+          
+          <p className="mt-3 font-semibold">New Stock Price: ₹{newStockPrice}</p>
+          <p>Additional Shares: {additionalShares}</p>
+          <p>Total Shares After Split: {totalShares}</p>
+          <p>Whole Shares After Split: {wholeShares}</p>
+          <p>Refund Amount: ₹{refundAmount}</p>
         </Card>
       </div>
     </div>
